@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跑酷游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="character">
+            <img src="assets/mario.svg" alt="Mario" id="mario-icon">
+        </div>
+    </div>
+    <div id="score">得分: 0</div>
+    <button id="start-button">开始游戏</button>
+    <div id="instruction">
+        按空格键跳跃（可二段跳），A键向左移动，D键向右移动，P键暂停/继续游戏。避开绿色障碍物！
+    </div>
+    <div id="game-over-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
+            <h2>游戏结束</h2>
+            <p id="final-score">得分: 0</p>
+            <button id="restart-button">重新开始</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
