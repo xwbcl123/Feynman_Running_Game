@@ -9,7 +9,7 @@ let score = 0;
 let obstacleSpeed = 5;
 let isInvincible = false;
 let characterPosition = 0;
-const characterSpeed = 10;
+const characterSpeed = 20; // 提升玩家速度
 let gameWidth = window.innerWidth;
 let gameHeight = window.innerHeight;
 const characterWidth = 120;
@@ -35,10 +35,96 @@ let cloudWarningMessage = null;
 let cloudWarningTimer = null;
 const cloudWarningTime = 10000;
 let animationFrameId = null;
+let currentLanguage = 'en';
+const translations = {
+    en: {
+        startGame: 'Start Game',
+        gameOver: 'Game Over',
+        finalScore: 'Final Score',
+        restart: 'Restart',
+        score: 'Score',
+        instruction: 'Press Space to jump (double jump available), A to move left, D to move right, P to pause/resume. Avoid tree stumps!',
+        paused: 'Game Paused. Press P to continue.',
+        selectLanguage: 'Select Language',
+        cloudWarning: 'Clouds will disappear soon. Get ready!',
+        loading: 'Made By Feynman',
+        restartHint: 'Press R to refresh the page',
+        flyUnlocked: 'Flight ability unlocked! You can use it once.',
+        invincibilityGained: '5 seconds invincibility gained!',
+        flyingStarted: 'Flying mode activated! 20 seconds remaining.',
+        flyingEnded: 'Flying mode ended.',
+        flyingReady: 'Flying ability is ready again!',
+        longInvincibilityGained: '10 seconds invincibility gained!',
+        obstaclesSlowed: 'Obstacles slowed down for 10 seconds!',
+        flightUsed: 'Flight ability already used!',
+        obstaclesNormal: 'Obstacle speed back to normal.',
+        flightUnavailable: 'Flight ability is not available.'
+    },
+    zh: {
+        startGame: '开始游戏',
+        gameOver: '游戏结束',
+        finalScore: '最终得分',
+        restart: '重新开始',
+        score: '得分',
+        instruction: '按空格键跳跃（可二段跳），A键向左移动，D键向右移动，P键暂停/继续游戏。避开树桩！',
+        paused: '游戏已暂停。按 P 键继续。',
+        selectLanguage: '选择语言',
+        cloudWarning: '云即将消失，请做好准备！',
+        loading: '来自Feynman',
+        restartHint: '按 R 键刷新页面',
+        flyUnlocked: '飞行能力已解锁！你可以使用一次。',
+        invincibilityGained: '获得5秒无敌时间！',
+        flyingStarted: '飞行模式已激活！剩余20秒。',
+        flyingEnded: '飞行模式已结束。',
+        flyingReady: '飞行能力已经准备就绪！',
+        longInvincibilityGained: '获得10秒无敌时间！',
+        obstaclesSlowed: '障碍物减速10秒！',
+        flightUsed: '飞行能力已经使用过了！',
+        obstaclesNormal: '障碍物速度恢复正常。',
+        flightUnavailable: '飞行能力不可用。'
+    }
+};
+
+// 添加一个新的变量来跟踪游戏是否已经开始
+let gameStarted = false;
+
+// 在全局变量部分添加以下变量
+let gameStartTime;
+let currentObstacleSpeed = 4; // 提高初始速度
+let currentObstacleGenerationProbability = 0.005; // 降低初始生成概率
+let canFly = false;
+let loadingScreen;
+let isFlying = false;
+let flyingTimer = null;
+let flyingTimeLeft = 20000; // 20秒，单位毫秒
+let isSpacePressed = false;
+let isShiftPressed = false;
+let hasUsedFlight = false;
+
+// 在全局变量部分添加飞行速度变量
+const flyingUpSpeed = 15;
+const flyingDownSpeed = 12;
+let flyingVelocity = 0;
+const flyingAcceleration = 0.5;
+const maxFlyingSpeed = 20;
 
 // 主函数
 function main() {
-    document.addEventListener('DOMContentLoaded', initializeDOMElements);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadingScreen = document.getElementById('loading-screen');
+        showLoadingScreen();
+        initializeDOMElements();
+        document.getElementById('game-container').style.display = 'none';
+        document.getElementById('language-selection').style.display = 'none';
+        document.getElementById('en-btn').addEventListener('click', () => selectLanguage('en'));
+        document.getElementById('zh-btn').addEventListener('click', () => selectLanguage('zh'));
+        
+        // 模拟加载过程
+        setTimeout(() => {
+            hideLoadingScreen();
+            document.getElementById('language-selection').style.display = 'flex';
+        }, 3000); // 3秒后隐藏加载画面
+    });
     window.addEventListener('resize', resizeGame);
 }
 
@@ -54,7 +140,11 @@ function initializeDOMElements() {
     finalScoreDisplay = document.getElementById('final-score');
     restartButton = document.getElementById('restart-button');
 
-    createPauseMessage();
+    pauseMessage = document.getElementById('pause-message');
+    if (!pauseMessage) {
+        createPauseMessage();
+    }
+
     addEventListeners();
     initializeGame();
 }
@@ -95,6 +185,7 @@ function addEventListeners() {
 function initializeGame() {
     // 重置游戏分数
     score = 0;
+    updateScore(); // 只更新显示，不增加分数
     // 初始化障碍物速度
     obstacleSpeed = 5;
     // 重置角色位置
@@ -103,7 +194,7 @@ function initializeGame() {
     character.style.bottom = '0px';
     
     // 更新分数显示
-    scoreDisplay.textContent = '得分: 0';
+    updateScore();
     
     // 重置无敌状态
     isInvincible = false;
@@ -156,6 +247,24 @@ function initializeGame() {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
     }
+    updateUIText();
+
+    // 更新指令显示
+    instructionDisplay.textContent = translations[currentLanguage].instruction;
+
+    // 完全重置飞行相关的状态
+    canFly = false;
+    hasUsedFlight = false;
+    isFlying = false;
+    if (flyingTimer) {
+        clearInterval(flyingTimer);
+        flyingTimer = null;
+    }
+    flyingTimeLeft = 20000;
+    isSpacePressed = false;
+    isShiftPressed = false;
+    character.classList.remove('flying', 'can-fly');
+    character.style.bottom = '0px';
 }
 
 
@@ -183,7 +292,6 @@ function clearObstaclesAndClouds() {
 
 // 开始游戏
 function startGame() {
-    //在 startGame 函数开始时，取消之前的动画帧：
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
@@ -200,31 +308,57 @@ function startGame() {
     setInvincibility(7000);
 
     startCloudCycle();
-    // 初始化动画帧
-    animationFrameId = requestAnimationFrame(gameLoop);
 
-    // 确保游戏循环开始
     isPaused = false;
-    gameLoop();
+    if (pauseMessage) {
+        pauseMessage.style.display = 'none';
+    }
+    gameContainer.classList.remove('paused');
+    
+    animationFrameId = requestAnimationFrame(gameLoop);
+    updateUIText();
+    gameStarted = true;
+    gameStartTime = Date.now();
+
+    // 确保游戏开始时分数为0
+    score = 0;
+    updateScore();
+
+    // 在 startGame 函数中重置难度
+    currentObstacleSpeed = 4;
+    currentObstacleGenerationProbability = 0.005;
 }
 
 
 // 重新开始游戏
 function restartGame() {
+    // 取消所有正在进行的动画和计时器
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    clearTimeout(invincibilityTimer);
+    clearInterval(cloudCycleTimer);
+    if (cloudWarningTimer) {
+        clearInterval(cloudWarningTimer);
+    }
+
+    // 重置游戏状态
     initializeGame();
     startGame();
+    updateUIText();
+    console.log('游戏已重新开始');
 }
 
 // 游戏主循环
-function gameLoop() {
+function gameLoop(timestamp) {
     if (!isPaused) {
         moveCharacter();
         moveObstacles();
         moveClouds();
         checkCollisions();
-        animationFrameId = requestAnimationFrame(gameLoop);
+        increaseDifficulty(); // 新增：根据时间增加难度
     }
-    
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 
@@ -367,7 +501,7 @@ function showGlobalCloudWarning() {
 
 // 更新警告消息
 function updateWarningMessage(remainingTime) {
-    cloudWarningMessage.textContent = `云即将消失请做好准备 ${remainingTime}`;
+    cloudWarningMessage.textContent = `${translations[currentLanguage].cloudWarning} ${remainingTime}`;
 }
 
 
@@ -415,45 +549,59 @@ function removeCloud(cloud) {
     }
 }
 
-// 移动角色
+// 修改 moveCharacter 函数中的飞行逻辑
 function moveCharacter() {
     if (isMovingLeft && characterPosition > 0) {
-        characterPosition -= characterSpeed;
+        characterPosition = Math.max(0, characterPosition - characterSpeed);
     }
     if (isMovingRight && characterPosition < gameWidth - characterWidth) {
-        characterPosition += characterSpeed;
+        characterPosition = Math.min(gameWidth - characterWidth, characterPosition + characterSpeed);
     }
-    character.style.left = characterPosition + 'px';
+    character.style.left = `${characterPosition}px`;
 
-    const cloudUnder = checkCloudCollisions();
-    if (cloudUnder && !isJumping && cloudsVisible) {
-        const cloudTop = cloudUnder.element.getBoundingClientRect().top;
-        const newBottom = gameHeight - cloudTop;
-        character.style.bottom = `${newBottom}px`;
-        
-        if (!cloudUnder.disappearTimer) {
-            cloudUnder.disappearTimer = setTimeout(() => {
-                removeCloud(cloudUnder);
-            }, cloudDisappearTime);
-            
-            startCloudFade(cloudUnder);
+    if (isFlying) {
+        let currentBottom = parseInt(character.style.bottom) || 0;
+        if (isSpacePressed) {
+            flyingVelocity = Math.min(flyingVelocity + flyingAcceleration, maxFlyingSpeed);
+        } else if (isShiftPressed) {
+            flyingVelocity = Math.max(flyingVelocity - flyingAcceleration, -maxFlyingSpeed);
+        } else {
+            flyingVelocity *= 0.95; // 缓慢减速
         }
+        currentBottom = Math.max(0, Math.min(gameHeight - characterHeight, currentBottom + flyingVelocity));
+        character.style.bottom = `${currentBottom}px`;
     } else {
-        clouds.forEach(cloud => {
-            if (cloud.disappearTimer) {
-                clearTimeout(cloud.disappearTimer);
-                cloud.disappearTimer = null;
+        flyingVelocity = 0;
+        const cloudUnder = checkCloudCollisions();
+        if (cloudUnder && !isJumping && cloudsVisible) {
+            const cloudTop = cloudUnder.element.getBoundingClientRect().top;
+            const newBottom = gameHeight - cloudTop;
+            character.style.bottom = `${newBottom}px`;
+            
+            if (!cloudUnder.disappearTimer) {
+                cloudUnder.disappearTimer = setTimeout(() => {
+                    removeCloud(cloudUnder);
+                }, cloudDisappearTime);
+                
+                startCloudFade(cloudUnder);
             }
-            cloud.element.style.opacity = '1';
-            clearInterval(cloud.fadeInterval);
-        });
-        
-        if (!isJumping && !isDoubleJumping) {
-            const currentBottom = parseInt(character.style.bottom) || 0;
-            if (currentBottom > 0) {
-                character.style.bottom = `${Math.max(0, currentBottom - 5)}px`;
-            } else {
-                character.style.bottom = '0px';
+        } else {
+            clouds.forEach(cloud => {
+                if (cloud.disappearTimer) {
+                    clearTimeout(cloud.disappearTimer);
+                    cloud.disappearTimer = null;
+                }
+                cloud.element.style.opacity = '1';
+                clearInterval(cloud.fadeInterval);
+            });
+            
+            if (!isJumping && !isDoubleJumping) {
+                const currentBottom = parseInt(character.style.bottom) || 0;
+                if (currentBottom > 0) {
+                    character.style.bottom = `${Math.max(0, currentBottom - 5)}px`;
+                } else {
+                    character.style.bottom = '0px';
+                }
             }
         }
     }
@@ -466,17 +614,45 @@ function handleKeyDown(event) {
         return;
     }
     
+    if (event.code === 'KeyL') {
+        showLanguageSelection();
+        return;
+    }
+    
+    if (event.code === 'KeyR') {
+        location.reload(); // 刷新整个页面
+        return;
+    }
+    
     if (!isPaused) {
         switch(event.code) {
             case 'Space':
-                jump();
+                if (isFlying) {
+                    isSpacePressed = true;
+                } else {
+                    jump();
+                }
                 event.preventDefault();
                 break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                if (isFlying) {
+                    isShiftPressed = true;
+                }
+                break;
             case 'KeyA':
+            case 'ArrowLeft':
                 isMovingLeft = true;
                 break;
             case 'KeyD':
+            case 'ArrowRight':
                 isMovingRight = true;
+                break;
+            case 'KeyW':
+            case 'ArrowUp':
+                if (canFly) {
+                    jump(); // 使用跳跃函数来实现飞行
+                }
                 break;
         }
     }
@@ -486,10 +662,19 @@ function handleKeyDown(event) {
 function handleKeyUp(event) {
     if (!isPaused) {
         switch(event.code) {
+            case 'Space':
+                isSpacePressed = false;
+                break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                isShiftPressed = false;
+                break;
             case 'KeyA':
+            case 'ArrowLeft':
                 isMovingLeft = false;
                 break;
             case 'KeyD':
+            case 'ArrowRight':
                 isMovingRight = false;
                 break;
         }
@@ -503,15 +688,52 @@ function jump() {
         cloudTimer = null;
     }
 
-    const cloudUnder = checkCloudCollisions();
-    if (!isJumping) {
+    if (canFly && !isFlying) {
+        startFlying();
+    } else if (!isJumping) {
         isJumping = true;
-        const jumpHeight = cloudUnder ? gameHeight / 4 : gameHeight / 3;
+        const jumpHeight = gameHeight / 3;
         performJump(jumpHeight);
     } else if (!isDoubleJumping) {
         isDoubleJumping = true;
         clearInterval(jumpInterval);
         performJump(gameHeight / 4);
+    }
+}
+
+// 添加 startFlying 函数
+function startFlying() {
+    if (!canFly || hasUsedFlight || isFlying) {
+        showMessage(translations[currentLanguage].flightUnavailable);
+        return;
+    }
+    isFlying = true;
+    hasUsedFlight = true;
+    flyingTimeLeft = 20000;
+    character.classList.add('flying');
+
+    flyingTimer = setInterval(() => {
+        flyingTimeLeft -= 100;
+        if (flyingTimeLeft <= 0) {
+            stopFlying();
+        }
+    }, 100);
+}
+
+// 添加 stopFlying 函数
+function stopFlying() {
+    isFlying = false;
+    canFly = false;
+    if (flyingTimer) {
+        clearInterval(flyingTimer);
+        flyingTimer = null;
+    }
+    character.classList.remove('flying');
+    character.style.bottom = '0px';  // 确保角色回到地面
+    
+    // 只有在游戏没有结束的情况下才显示消息
+    if (!isPaused) {
+        showMessage(translations[currentLanguage].flyingEnded);
     }
 }
 
@@ -580,13 +802,11 @@ function createObstacle() {
     };
 }
 
-// 移动障碍物
+// 修改 moveObstacles 函数
 function moveObstacles() {
-    const maxObstacles = increaseGameDifficulty();
-
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obstacle = obstacles[i];
-        obstacle.position -= obstacleSpeed;
+        obstacle.position -= currentObstacleSpeed;
         
         if (isNaN(obstacle.position)) {
             console.error(`障碍物 ${i} 的位置是 NaN`);
@@ -598,12 +818,11 @@ function moveObstacles() {
         if (obstacle.position + obstacleWidth < 0) {
             gameContainer.removeChild(obstacle.element);
             obstacles.splice(i, 1);
-            score++;
-            scoreDisplay.textContent = '得分: ' + score;
+            increaseScore(); // 使用新的 increaseScore 函数
         }
     }
 
-    if (Math.random() < obstacleGenerationProbability && obstacles.length < maxObstacles) {
+    if (Math.random() < currentObstacleGenerationProbability) {
         obstacles.push(createObstacle());
     }
 
@@ -640,22 +859,22 @@ function checkCollisions() {
     }
 }
 
-// 增加游戏难度
-function increaseGameDifficulty() {
-    obstacleGenerationProbability = Math.min(0.03, 0.01 + score * 0.0002);
-    obstacleSpeed = Math.min(10, 5 + score * 0.05);
-    const maxObstacles = Math.min(5, 2 + Math.floor(score / 5));
+// 新增 increaseDifficulty 函数
+function increaseDifficulty() {
+    const elapsedTime = (Date.now() - gameStartTime) / 1000; // 游戏已进行的秒数
     
-    console.log(`当前难度: 生成概率${obstacleGenerationProbability.toFixed(5)}, 速度${obstacleSpeed.toFixed(2)}, 最大障碍物数量${maxObstacles}`);
-    
-    return maxObstacles;
+    // 每30秒增加一次难度，而不是45秒
+    if (elapsedTime % 30 < 0.017) { // 0.017是一帧的大约时间，确保只在一帧内执行一次
+        currentObstacleSpeed = Math.min(12, currentObstacleSpeed + 0.75); // 最大速度12，每次增加0.75
+        currentObstacleGenerationProbability = Math.min(0.03, currentObstacleGenerationProbability + 0.002); // 保持生成概率不变
+        console.log(`难度提升：速度 ${currentObstacleSpeed}, 生成概率 ${currentObstacleGenerationProbability}`);
+    }
 }
 
 
 // 结束游戏
 function endGame() {
     isPaused = true;
-    //在 endGame 函数中，也取消动画帧：
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
@@ -663,12 +882,24 @@ function endGame() {
     clearInterval(cloudCycleTimer);
     isInvincible = false;
     character.style.opacity = '1';
+    
+    // 重置飞行状态，但不显示消息
+    isFlying = false;
+    canFly = false;
+    hasUsedFlight = false;
+    if (flyingTimer) {
+        clearInterval(flyingTimer);
+        flyingTimer = null;
+    }
+    character.classList.remove('flying', 'can-fly');
+    character.style.bottom = '0px';
+    
     console.log('游戏结束');
     console.log(`最终得分: ${score}`);
     console.log(`角色最终位置: ${characterPosition}, 底部: ${character.style.bottom}`);
     console.log(`障碍物数量: ${obstacles.length}, 云朵数量: ${clouds.length}`);
     
-    finalScoreDisplay.textContent = `得分: ${score}`;
+    finalScoreDisplay.textContent = `${translations[currentLanguage].finalScore}: ${score}`;
     gameOverScreen.style.display = 'flex';
 
     if (cloudWarningTimer) {
@@ -682,11 +913,20 @@ function togglePause() {
     isPaused = !isPaused;
     if (pauseMessage) {
         if (isPaused) {
-            pauseMessage.textContent = '游戏已暂停。按 P 键继续。';
+            pauseMessage.textContent = translations[currentLanguage].paused;
             pauseMessage.style.display = 'block';
-            clearTimeout(invincibilityTimer);
+            gameContainer.classList.add('paused');
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
         } else {
             pauseMessage.style.display = 'none';
+            gameContainer.classList.remove('paused');
+            if (!animationFrameId) {
+                gameLoop();
+            }
+            // 给予玩家1秒的无敌时间
             setInvincibility(1000);
         }
     }
@@ -697,10 +937,17 @@ function togglePause() {
 function setInvincibility(duration) {
     isInvincible = true;
     character.classList.add('invincible');
+    // 添加闪烁效果
+    let blinkInterval = setInterval(() => {
+        character.style.opacity = character.style.opacity === '1' ? '0.5' : '1';
+    }, 200);
+
     clearTimeout(invincibilityTimer);
     invincibilityTimer = setTimeout(() => {
         isInvincible = false;
         character.classList.remove('invincible');
+        character.style.opacity = '1';
+        clearInterval(blinkInterval);
         console.log('无敌时间结束');
     }, duration);
     console.log(`设置无敌时间: ${duration}ms`);
@@ -722,6 +969,157 @@ function resizeGame() {
     });
 }
 
+// 添加语言选择函数
+function selectLanguage(lang) {
+    currentLanguage = lang;
+    updateLoadingText(); // 更新加载画面的文本
+    document.getElementById('language-selection').style.display = 'none';
+    document.getElementById('game-container').style.display = 'block';
+    updateUIText();
+    if (!gameStarted) {
+        initializeGame();
+    } else {
+        isPaused = false;
+        gameLoop();
+    }
+    // 更新指令显示
+    instructionDisplay.textContent = translations[currentLanguage].instruction;
+    console.log(`Language selected: ${lang}`);
+}
+
+// 更新UI文本的函数
+function updateUIText() {
+    const elements = {
+        'start-button': translations[currentLanguage].startGame,
+        'game-over-text': translations[currentLanguage].gameOver,
+        'final-score': `${translations[currentLanguage].finalScore}: ${score}`,
+        'restart-button': translations[currentLanguage].restart,
+        'instruction': translations[currentLanguage].instruction, // 恢复原来的指令
+        'languageButton': translations[currentLanguage].selectLanguage
+    };
+
+    for (const [id, text] of Object.entries(elements)) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = text;
+        } else {
+            console.warn(`Element with id '${id}' not found`);
+        }
+    }
+
+    updateScore(); // 更新分数显示
+
+    if (pauseMessage) {
+        pauseMessage.textContent = translations[currentLanguage].paused;
+    }
+    
+    console.log('UI text updated');
+
+    // 添加重新开始的提示
+    const restartHint = document.getElementById('restart-hint');
+    if (restartHint) {
+        restartHint.textContent = translations[currentLanguage].restartHint;
+    } else {
+        console.warn('Element with id "restart-hint" not found');
+    }
+}
+
+// 修改 updateScore 函数
+function updateScore() {
+    scoreDisplay.textContent = `${translations[currentLanguage].score}: ${score}`;
+    
+    if (score === 20 && !hasUsedFlight && !canFly && !isFlying) {
+        canFly = true;
+        character.classList.add('can-fly');
+        showMessage(translations[currentLanguage].flyUnlocked);
+    }
+
+    if (score === 10) {
+        setInvincibility(5000);
+        showMessage(translations[currentLanguage].invincibilityGained);
+    }
+
+    if (score === 40) {
+        setInvincibility(10000);
+        showMessage(translations[currentLanguage].longInvincibilityGained);
+    }
+
+    if (score === 60) {
+        slowDownObstacles();
+        showMessage(translations[currentLanguage].obstaclesSlowed);
+    }
+}
+
+// 新增 increaseScore 函数
+function increaseScore() {
+    score++;
+    updateScore();
+}
+
+// 添加一个新函数来显示临时消息
+function showMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    messageElement.style.position = 'absolute';
+    messageElement.style.top = '50%';
+    messageElement.style.left = '50%';
+    messageElement.style.transform = 'translate(-50%, -50%)';
+    messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    messageElement.style.color = 'white';
+    messageElement.style.padding = '10px';
+    messageElement.style.borderRadius = '5px';
+    messageElement.style.zIndex = '1000';
+    gameContainer.appendChild(messageElement);
+
+    setTimeout(() => {
+        gameContainer.removeChild(messageElement);
+    }, 3000);
+}
+
+// 添加新的函数来显示语言选择界面
+function showLanguageSelection() {
+    isPaused = true;
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    document.getElementById('game-container').style.display = 'none';
+    document.getElementById('language-selection').style.display = 'flex';
+}
+
+// 添加显示加载画面的函数
+function showLoadingScreen() {
+    loadingScreen.style.display = 'flex';
+    updateLoadingText();
+}
+
+// 添加隐藏加载画面的函数
+function hideLoadingScreen() {
+    loadingScreen.style.display = 'none';
+}
+
+// 修改 updateLoadingText 函数
+function updateLoadingText() {
+    const loadingTextEn = document.getElementById('loading-text-en');
+    const loadingTextZh = document.getElementById('loading-text-zh');
+    
+    if (currentLanguage === 'zh') {
+        loadingTextEn.style.display = 'none';
+        loadingTextZh.style.display = 'block';
+    } else {
+        loadingTextEn.style.display = 'block';
+        loadingTextZh.style.display = 'none';
+    }
+}
+
+// 添加 slowDownObstacles 函数
+function slowDownObstacles() {
+    currentObstacleSpeed *= 0.5; // 减半障碍物速度
+    setTimeout(() => {
+        currentObstacleSpeed *= 2; // 10秒后恢复正常速度
+        showMessage(translations[currentLanguage].obstaclesNormal);
+    }, 10000);
+}
 
 // 调用主函数
 main();
