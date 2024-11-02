@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- 头部 -->
+    <rect x="40" y="20" width="40" height="35" fill="#FFD5B5"/>
+    
+    <!-- 头发 -->
+    <path d="M40 20 h40 v-5 h-40 z
+             M35 20 v25 h5 v-25 z
+             M80 20 v25 h5 v-25 z" 
+          fill="#4A3728"/>
+    
+    <!-- 胡茬 -->
+    <rect x="45" y="45" width="30" height="5" fill="#6D4C3D" opacity="0.3"/>
+    
+    <!-- 眼睛 -->
+    <rect x="48" y="35" width="8" height="4" fill="#2C1810"/>
+    <rect x="64" y="35" width="8" height="4" fill="#2C1810"/>
+    
+    <!-- 嘴巴 - 微笑但略带疲惫 -->
+    <path d="M55 42 q5 3 10 0" stroke="#2C1810" fill="none" stroke-width="2"/>
+    
+    <!-- 左手 -->
+    <path d="M25 65 
+             c-5 0, -8 5, -8 10
+             c0 5, 3 8, 8 8
+             l10 0
+             l0 -18
+             l-10 0" 
+          fill="#FFD5B5"/>
+    <!-- 左手袖子 -->
+    <path d="M35 65 
+             l-10 0
+             l0 18
+             l10 0
+             l0 -18" 
+          fill="#FFFFFF"
+          stroke="#EEEEEE"
+          stroke-width="1"/>
+    
+    <!-- 白衬衫 -->
+    <rect x="35" y="55" width="50" height="35" fill="#FFFFFF"/>
+    
+    <!-- 红领带 -->
+    <path d="M55 55 l5 25 l5 -25 h-10" fill="#D32F2F"/>
+    
+    <!-- 西装裤 -->
+    <rect x="40" y="90" width="40" height="25" fill="#666666"/>
+    
+    <!-- 黑鞋 -->
+    <rect x="35" y="115" width="20" height="5" fill="#1A1A1A"/>
+    <rect x="65" y="115" width="20" height="5" fill="#1A1A1A"/>
+    
+    <!-- 棕色公文包 -->
+    <rect x="85" y="65" width="20" height="25" fill="#8B4513"/>
+    <rect x="90" y="60" width="10" height="5" fill="#654321"/>
+    
+    <!-- 疲惫的眼袋 -->
+    <path d="M48 39 q4 2 8 0" stroke="#FFB59E" fill="none" stroke-width="1" opacity="0.5"/>
+    <path d="M64 39 q4 2 8 0" stroke="#FFB59E" fill="none" stroke-width="1" opacity="0.5"/>
+    
+    <!-- 衬衫褶皱 -->
+    <path d="M40 65 h40 M40 75 h40 M40 85 h40" 
+          stroke="#EEEEEE" stroke-width="1" opacity="0.5"/>
+    
+    <!-- 包带 -->
+    <path d="M85 65 q-20 -10 -30 -10" 
+          stroke="#654321" fill="none" stroke-width="3"/>
+</svg> 
