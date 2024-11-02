@@ -3,26 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>跑酷游戏</title>
+    <title>Feynman Running Game</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        #loading-text {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #fff;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        #language-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+        }
+
+        #language-selection h2 {
+            color: #fff;
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .language-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .language-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .language-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+
+        .language-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #level-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #level-selection h2 {
+            color: white;
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .level-button {
+            width: 300px;
+            height: 200px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.3s;
+            background: none;
+        }
+
+        .level-button .level-background {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+
+        .level-button .level-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .level-button:hover {
+            transform: scale(1.05);
+        }
+
+        #victory-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        #victory-text {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 255, 0, 0.5);
+        }
+
+        #victory-score {
+            font-size: 36px;
+            margin-bottom: 30px;
+        }
+
+        #skin-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+        }
+
+        #skin-selection h2 {
+            color: #fff;
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .skin-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .skin-option {
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .skin-option:hover {
+            transform: scale(1.05);
+        }
+
+        .skin-option img {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .skin-name {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 24px;
+            color: #fff;
+        }
+
+        #confirm-skin {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #confirm-skin:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+
+        #confirm-skin:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
+    <div id="loading-screen" class="fullscreen">
+        <div class="loading-content fade-in">
+            <h1 id="loading-text-en">Made By Feynman</h1>
+            <h1 id="loading-text-zh">来自Feynman</h1>
+            <div class="spinner"></div>
+        </div>
+    </div>
+    <div id="language-selection">
+        <h2>Select Language / 选择语言</h2>
+        <div class="language-buttons">
+            <button id="en-btn" class="language-button">English</button>
+            <button id="zh-btn" class="language-button">中文</button>
+        </div>
+    </div>
+    <div id="skin-selection" style="display: none;">
+        <h2 id="skin-selection-title">Select Character</h2>
+        <div class="skin-container">
+            <div class="skin-option" data-skin="default">
+                <img src="assets/mario.svg" alt="Default">
+                <div class="skin-name" data-translate="defaultSkin">Default</div>
+            </div>
+            <div class="skin-option" data-skin="player">
+                <img src="assets/player.svg" alt="Player">
+                <div class="skin-name" data-translate="playerSkin">Parkour Boy</div>
+            </div>
+            <div class="skin-option" data-skin="worker">
+                <img src="assets/worker.svg" alt="Worker">
+                <div class="skin-name" data-translate="workerSkin">Worker</div>
+            </div>
+            <div class="skin-option" data-skin="mom">
+                <img src="assets/chef.svg" alt="Chef">
+                <div class="skin-name" data-translate="momSkin">Chef Mom</div>
+            </div>
+        </div>
+        <button id="confirm-skin" class="game-button" data-translate="confirmSkin">Confirm</button>
+    </div>
+    <div id="level-selection" style="display: none;">
+        <h2 id="level-selection-title">选择关卡</h2>
+        <div class="level-container">
+            <button class="level-button" onclick="selectLevel(1)">
+                <img src="assets/bg1.jpg" alt="Level 1" class="level-image">
+                <div class="level-info">
+                    <div class="level-text" data-translate="level1">第一关</div>
+                    <div class="level-description" data-translate="levelTarget">通关分数：50</div>
+                </div>
+            </button>
+        </div>
+        <div class="game-description" data-translate="gameDescription">
+            项目简介：玩家控制角色奔跑、跳跃，躲避障碍并获得分数，支持中英文，含特殊能力和开发者模式。达到 50 分即可通关。
+        </div>
+    </div>
     <div id="game-container">
         <div id="character">
             <img src="assets/mario.svg" alt="Mario" id="mario-icon">
         </div>
-    </div>
-    <div id="score">得分: 0</div>
-    <button id="start-button">开始游戏</button>
-    <div id="instruction">
-        按空格键跳跃（可二段跳），A键向左移动，D键向右移动，P键暂停/继续游戏。避开绿色障碍物！
-    </div>
-    <div id="game-over-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 1000;">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
-            <h2>游戏结束</h2>
+        <div id="score">得分: 0</div>
+        <button id="start-button">开始游戏</button>
+        <div id="instruction">
+            按空格键跳跃（可二段跳），A键向左移动，D键向右移动，P键暂停/继续游戏。避开绿色障碍物！
+        </div>
+        <div id="game-over-screen" style="display: none;">
+            <h2 id="game-over-text">游戏结束</h2>
             <p id="final-score">得分: 0</p>
             <button id="restart-button">重新开始</button>
         </div>
+        <div id="victory-screen" style="display: none;">
+            <h2 id="victory-text">恭喜通关！</h2>
+            <p id="victory-score">得分：0</p>
+            <button id="back-to-menu-button" class="game-button">返回菜单</button>
+        </div>
+        <div id="restart-hint" style="position: absolute; top: 10px; right: 10px; color: white;"></div>
     </div>
     <script src="game.js"></script>
 </body>

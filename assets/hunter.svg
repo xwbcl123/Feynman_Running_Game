@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- 宽檐帽 -->
+    <path d="M25 25 
+             h70
+             l15 8
+             h-100
+             l15 -8" 
+          fill="#1A0F0F"/>
+    <path d="M30 33 
+             h60
+             l8 12
+             h-76
+             l8 -12" 
+          fill="#2A1F1F"/>
+    
+    <!-- 阴影遮住的脸部 -->
+    <rect x="40" y="35" width="40" height="30" fill="#4A3728"/>
+    <path d="M40 35 h40 v20 h-40 z" fill="rgba(0,0,0,0.4)"/>
+    
+    <!-- 狰狞的眼睛 -->
+    <path d="M45 45 l10 2 l-10 2" fill="#FF2000" stroke="#800000" stroke-width="1.5"/>
+    <path d="M65 45 l10 2 l-10 2" fill="#FF2000" stroke="#800000" stroke-width="1.5"/>
+    
+    <!-- 邪气的笑容 -->
+    <path d="M50 55 
+             q10 8 20 0" 
+          stroke="#300000" 
+          fill="none" 
+          stroke-width="2"/>
+    
+    <!-- 深绿色风衣 -->
+    <path d="M30 65 
+             l-15 50
+             h90
+             l-15 -50
+             h-60" 
+          fill="#1A2F1A"/>
+    
+    <!-- 风衣破损和缝线 -->
+    <path d="M35 75 l8 8 M55 85 l-10 10 M75 95 l12 8" 
+          stroke="#0A1F0A" 
+          stroke-width="2"
+          stroke-dasharray="4,4"/>
+    
+    <!-- 霰弹枪 -->
+    <path d="M20 70 
+             h45
+             l8 8
+             h-53
+             l0 -8" 
+          fill="#0A0A0A"/>
+    <path d="M65 70 
+             l20 -8
+             v8
+             l-20 8
+             z" 
+          fill="#1A1A1A"/>
+    
+    <!-- 枪身划痕 -->
+    <path d="M25 70 l15 0 M50 70 l10 0" 
+          stroke="#333333" 
+          stroke-width="1.5"/>
+    
+    <!-- 腰带和弹药 -->
+    <rect x="30" y="85" width="60" height="10" fill="#2A1F1F"/>
+    
+    <!-- 子弹 -->
+    <rect x="35" y="82" width="5" height="16" fill="#C0C0C0"/>
+    <rect x="45" y="82" width="5" height="16" fill="#C0C0C0"/>
+    <rect x="55" y="82" width="5" height="16" fill="#C0C0C0"/>
+    
+    <!-- 神秘小瓶 -->
+    <path d="M70 82 
+             l4 4
+             v10
+             l-8 0
+             v-10
+             l4 -4" 
+          fill="#4A0080"/>
+    <path d="M82 82 
+             l4 4
+             v10
+             l-8 0
+             v-10
+             l4 -4" 
+          fill="#006666"/>
+    
+    <!-- 风衣阴影和褶皱 -->
+    <path d="M30 65 
+             l-8 25
+             l-7 25
+             h15" 
+          fill="#0F1F0F"/>
+    <path d="M90 65 
+             l8 25
+             l7 25
+             h-15" 
+          fill="#0F1F0F"/>
+    
+    <!-- 额外的风衣细节 -->
+    <path d="M40 70 h40 M35 80 h50 M30 90 h60" 
+          stroke="#233823" 
+          stroke-width="1"
+          opacity="0.6"/>
+</svg> 
